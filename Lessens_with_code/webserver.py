@@ -122,6 +122,7 @@ class WebServerHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         try:
+            ##### Create a New Restaurant #####
             if self.path.endswith("/restaurants/new"):
                 ctype, pdict = cgi.parse_header(
                     self.headers.getheader('content-type'))
@@ -139,6 +140,7 @@ class WebServerHandler(BaseHTTPRequestHandler):
                     self.send_header('Location', '/restaurants')
                     self.end_headers()
 
+            ##### Update Restaurant #####
             if self.path.endswith("/edit"):
                 ctype, pdict = cgi.parse_header(
                     self.headers.getheader('content-type'))
@@ -160,6 +162,7 @@ class WebServerHandler(BaseHTTPRequestHandler):
                         self.send_header('Location', '/restaurants')
                         self.end_headers()
 
+            ##### Delete Restaurant #####
             if self.path.endswith("/delete"):
                 ctype, pdict = cgi.parse_header(
                     self.headers.getheader('content-type'))
