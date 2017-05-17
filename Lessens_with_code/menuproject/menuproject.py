@@ -19,6 +19,8 @@ DBSession = sessionmaker(bind=engine)
 # session.rollback()
 session = DBSession()
 
+"""TODO: CSS style and Authorization"""
+
 
 ############# Restaurants ###########
 # 1. Show all restaurants
