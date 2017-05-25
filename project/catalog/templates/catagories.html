@@ -1,0 +1,34 @@
+<html>
+
+<body>
+
+<h1>Catagories:</h1>
+	<a href = '{{url_for('newCatagory') }}'>
+		Create A New Catagory
+	</a>
+
+
+	<div class = "flash">
+		{% with messages = get_flashed_messages() %}
+			{% if messages %}
+				<ul>
+					{% for message in messages %}
+					<li> <strong> {{ message }} </strong> </li>
+					{% endfor %}
+				</ul>
+			{% endif %}
+		{% endwith %}
+	</div>
+
+	{% for catagory in catagories %}
+	<br><br>
+	<a href='{{url_for('CatagoryItems', catagory_id = catagory.id)}}'>{{catagory.name}}</a>
+	<br><br>
+	<div class = "editdeletepane">
+		<a href='{{url_for('editCatagory',catagory_id = catagory.id)}}' >Edit</a>
+		<a href='{{url_for('deleteCatagory', catagory_id = catagory.id)}}' >Delete</a>
+	</div>
+	{% endfor %}
+</body>
+
+</html>
