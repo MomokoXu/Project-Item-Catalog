@@ -55,13 +55,13 @@ def fbconnect():
     result = h.request(url, 'GET')[1]
 
     # Use token to get user info from API
-    userinfo_url = "https://graph.facebook.com/v2.4/me"
+    userinfo_url = "https://graph.facebook.com/v2.9/me"
     # strip expire tag from access token
     data = json.loads(result)
     token = 'access_token=' + data['access_token']
 
 
-    url = 'https://graph.facebook.com/v2.4/me?%s&fields=name,id,email' % token
+    url = 'https://graph.facebook.com/v2.9/me?%s&fields=name,id,email' % token
     h = httplib2.Http()
     result = h.request(url, 'GET')[1]
     # print "url sent for API access:%s"% url
@@ -77,7 +77,7 @@ def fbconnect():
     login_session['access_token'] = stored_token
 
     # Get user picture
-    url = 'https://graph.facebook.com/v2.4/me/picture?%s&redirect=0&height=200&width=200' % token
+    url = 'https://graph.facebook.com/v2.9/me/picture?%s&redirect=0&height=200&width=200' % token
     h = httplib2.Http()
     result = h.request(url, 'GET')[1]
     data = json.loads(result)
@@ -172,8 +172,8 @@ def gconnect():
         return response
 
     # Store the access token in the session for later use.
-    login_session['access_token'] = credentials.access_token
     login_session['gplus_id'] = gplus_id
+    login_session['credentials'] = credentials.access_token
 
     # Get user info
     userinfo_url = "https://www.googleapis.com/oauth2/v1/userinfo"
@@ -241,7 +241,7 @@ def gdisconnect():
             json.dumps('Current user not connected.'), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
-    access_token = credentials.access_token
+    access_token = credentials
     url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % access_token
     h = httplib2.Http()
     result = h.request(url, 'GET')[0]
@@ -251,7 +251,30 @@ def gdisconnect():
             json.dumps('Failed to revoke token for given user.'), 400)
         response.headers['Content-Type'] = 'application/json'
         return response
-
+    else:
+        del login_session['gplus_id']
+        del login_session['credentials']
+        return "You have successfully been logged out."
+# Disconnect based on provider
+@app.route('/disconnect')
+def disconnect():
+    if 'provider' in login_session:
+        print login_session
+        if login_session['provider'] == 'google':
+            gdisconnect()
+        if login_session['provider'] == 'facebook':
+            fbdisconnect()
+            del login_session['facebook_id']
+        del login_session['username']
+        del login_session['email']
+        del login_session['picture']
+        del login_session['user_id']
+        del login_session['provider']
+        flash("You have successfully been logged out.")
+        return redirect(url_for('showCatagories'))
+    else:
+        flash("You were not logged in")
+        return redirect(url_for('showCatagories'))
 
 # JSON APIs to view Restaurant Information
 @app.route('/catagory/<int:catagory_id>/item/JSON')
@@ -344,7 +367,7 @@ def CatagoryItems(catagory_id):
     items = session.query(Item).filter_by(
         catagory_id=catagory_id).all()
     if 'username' not in login_session or creator.id != login_session['user_id']:
-        return render_template('publicmenu.html', items=items, catagory=catagory, creator=creator)
+        return render_template('publicitems.html', items=items, catagory=catagory, creator=creator)
     else:
         return render_template('catagoryItems.html', catagory_id=catagory_id, items=items, catagory=catagory,creator=creator)
 
@@ -408,27 +431,7 @@ def deleteCatagoryItem(catagory_id, item_id):
     else:
         return render_template('deleteCatagoryItem.html', catagory_id=catagory_id, item=itemToDelete)
 
-# Disconnect based on provider
-@app.route('/disconnect')
-def disconnect():
-    if 'provider' in login_session:
-        if login_session['provider'] == 'google':
-            gdisconnect()
-            del login_session['gplus_id']
-            del login_session['credentials']
-        if login_session['provider'] == 'facebook':
-            fbdisconnect()
-            del login_session['facebook_id']
-        del login_session['username']
-        del login_session['email']
-        del login_session['picture']
-        del login_session['user_id']
-        del login_session['provider']
-        flash("You have successfully been logged out.")
-        return redirect(url_for('showCatagories'))
-    else:
-        flash("You were not logged in")
-        return redirect(url_for('showCatagories'))
+
 
 if __name__ == '__main__':
     app.secret_key = 'super_secret_key'
