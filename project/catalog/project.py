@@ -278,7 +278,7 @@ def disconnect():
 
 # JSON APIs to view Restaurant Information
 @app.route('/catagory/<int:catagory_id>/item/JSON')
-def catagoryMenuJSON(catagory_id):
+def catagoryItemsJSON(catagory_id):
     catagory = session.query(Catagory).filter_by(id=catagory_id).one()
     items = session.query(Item).filter_by(
         catagory_id=catagory_id).all()
@@ -286,13 +286,13 @@ def catagoryMenuJSON(catagory_id):
 
 
 @app.route('/catagory/<int:catagory_id>/item/<int:item_id>/JSON')
-def menuItemJSON(catagory_id, item_id):
+def catagoryItemJSON(catagory_id, item_id):
     item = session.query(Item).filter_by(id=item_id).one()
-    return jsonify(Item=Item.serialize)
+    return jsonify(Item=item.serialize)
 
 
 @app.route('/catagory/JSON')
-def catagoryJSON():
+def catagoriesJSON():
     catagories = session.query(Catagory).all()
     return jsonify(catagories=[r.serialize for r in catagories])
 
@@ -304,7 +304,7 @@ def showCatagories():
     if 'username' not in login_session:
         return render_template('publiccatagories.html', catagories=catagories)
     else:
-        return render_template('catagories.html', catagories=catagories)
+        return render_template('catagories.html', catagories=catagories, username=login_session['username'])
 
 
 # Create a new Catagory
