@@ -1,12 +1,20 @@
-<html>
-
-<body>
-
-<h1>Catagories:</h1>
-	<a href = '{{url_for('newCatagory') }}'>
-		Create A New Catagory
-	</a>
-
+{% extends "main.html" %}
+{% block content %}
+{% include "header.html" %}
+	<div class="row top-menu">
+		<div class="col-md-10"></div>
+		<div class="col-md-2 text-right">
+					</div>
+	</div>
+	<div class="row divider blue">
+		<div class="col-md-12"></div>
+	</div>
+	<div class="row banner main">
+		<div class="col-md-1"></div>
+		<div class="col-md-11 padding-none">
+			<h1>Catagories:</h1>
+		</div>
+	</div>
 
 	<div class = "flash">
 		{% with messages = get_flashed_messages() %}
@@ -20,15 +28,28 @@
 		{% endwith %}
 	</div>
 
+	<div class="row padding-top padding-bottom">
+		<div class="col-md-1"></div>
+		<div class="col-md-10 padding-none">
+			<a href = '{{url_for('newCatagory') }}'>
+				<button class="btn btn-default" id="new-restaurant">
+					<span class="glyphicon glyphicon-briefcase" aria-hidden="true"></span>Add Catagory
+				</button>
+			</a>
+		</div>
+		<div class="col-md-1"></div>
+	</div>
 	{% for catagory in catagories %}
 	<br><br>
-	<a href='{{url_for('CatagoryItems', catagory_id = catagory.id)}}'>{{catagory.name}}</a>
-	<br><br>
-	<div class = "editdeletepane">
-		<a href='{{url_for('editCatagory',catagory_id = catagory.id)}}' >Edit</a>
-		<a href='{{url_for('deleteCatagory', catagory_id = catagory.id)}}' >Delete</a>
+	<div class="row catagory-list">
+		<div class="col-md-1"></div>
+		<a href='{{url_for('CatagoryItems', catagory_id = catagory.id)}}'>{{catagory.name}}</a>
+		<br>
+		<div class="col-md-1"></div>
+		<div class = "editdeletepane">
+			<a href='{{url_for('editCatagory',catagory_id = catagory.id)}}' >Edit</a>
+			<a href='{{url_for('deleteCatagory', catagory_id = catagory.id)}}' >Delete</a>
+		</div>
 	</div>
 	{% endfor %}
-</body>
-
-</html>
+{% endblock %}
