@@ -301,10 +301,20 @@ def catagoriesJSON():
 @app.route('/catagory/')
 def showCatagories():
     catagories = session.query(Catagory).order_by(asc(Catagory.name))
+    items = session.query(Item).order_by(Item.id.desc())
+    info = zip(catagories, items)
+    c_count = session.query(Catagory).count()
+    i_count = session.query(Item).count()
+    catagories_more=[]
+    items_more=[]
+    if c_count > i_count:
+        catagories_more = catagories[i_count:]
+    elif c_count < i_count:
+        items_more = items[c_count:]
     if 'username' not in login_session:
-        return render_template('publiccatagories.html', catagories=catagories)
+        return render_template('publiccatagories.html', info=info, items=items_more, catagories=catagories_more)
     else:
-        return render_template('catagories.html', catagories=catagories, username=login_session['username'])
+        return render_template('catagories.html', info=info, items=items_more, catagories=catagories_more, username=login_session['username'])
 
 
 # Create a new Catagory
@@ -390,7 +400,7 @@ def newCatagoryItem(catagory_id):
         return render_template('newCatagoryItem.html', catagory_id=catagory_id)
 
 
-# Edit a menu item
+# Edit a catagory item
 @app.route('/catagory/<int:catagory_id>/item/<int:item_id>/edit', methods=['GET', 'POST'])
 def editCatagoryItem(catagory_id, item_id):
     if 'username' not in login_session:
@@ -414,7 +424,7 @@ def editCatagoryItem(catagory_id, item_id):
         return render_template('editcatagoryitem.html', catagory_id=catagory_id, item_id=item_id, editedItem=editedItem)
 
 
-# Delete a menu item
+# Delete a catagory item
 @app.route('/catagory/<int:catagory_id>/item/<int:item_id>/delete', methods=['GET', 'POST'])
 def deleteCatagoryItem(catagory_id, item_id):
     if 'username' not in login_session:
@@ -431,7 +441,15 @@ def deleteCatagoryItem(catagory_id, item_id):
     else:
         return render_template('deleteCatagoryItem.html', catagory_id=catagory_id, item=itemToDelete)
 
-
+# retrive a catagory item information
+@app.route('/catagory/<int:catagory_id>/item/<int:item_id>/info')
+def catagoryItemInfo(catagory_id, item_id):
+    catagory = session.query(Catagory).filter_by(id=catagory_id).one()
+    itemToView = session.query(Item).filter_by(id=item_id).one()
+    if 'username' not in login_session:
+        return render_template('publicCatagoryItem.html',catagory=catagory, item=itemToView)
+    else:
+        return render_template('showCatagoryItem.html', catagory=catagory, item=itemToView)
 
 if __name__ == '__main__':
     app.secret_key = 'super_secret_key'
