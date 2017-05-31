@@ -1,0 +1,25 @@
+<html>
+<body>
+<h1> New Catagory Item </h1>
+
+<form action="{{url_for('newCatagoryItem', catagory_id=catagory_id )}}" method = 'POST'>
+
+<p>Name:</p>
+<input type='text' size='30' name='name'>
+<br></br>
+
+<p>Description:</p>
+<input type='text' size='30' name='description'>
+</br></br>
+
+<p>Price:</p>
+<input type='text' size='30' name='price'>
+<br></br>
+
+<input type='submit' value='Create'>
+
+</form>
+<a href= '{{url_for('CatagoryItems', catagory_id=catagory_id)}}'>Cancel</a>
+
+</body>
+</html>

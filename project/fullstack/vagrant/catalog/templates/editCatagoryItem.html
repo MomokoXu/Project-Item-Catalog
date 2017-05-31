@@ -1,0 +1,23 @@
+
+<html>
+<body>
+<h1> Edit Catagory Item </h1>
+<form action= "{{url_for('editCatagoryItem', catagory_id = catagory_id, item_id=item_id)}}" method = 'POST'>
+
+<p>Name:</p>
+<input type='text' size='30' name='name' placeholder='{{editedItem.name}}'>
+</br></br>
+
+<p>Description:</p>
+<input type='text' size='30' name='description' placeholder='{{editedItem.description}}'>
+</br></br>
+
+<p>Price:</p>
+<input type='text' size='30' name='price' placeholder='{{editedItem.price}}'>
+</br></br>
+
+<input type='submit' value='Edit'>
+</form>
+<a href= '{{url_for('CatagoryItems', catagory_id= catagory_id)}}'>Cancel</a>
+</body>
+</html>
