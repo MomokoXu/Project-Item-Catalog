@@ -45,10 +45,6 @@ This application provides JSON endpoints.
     * Run: python project.py
 4. Open http://localhost:8000/ in your browser.
 ---
-## Future work
-This project currently only support single tournament, in the future it is supposed to be extended to support multiple tournaments.
-
----
 
 ## Author
 [Yingtao Xu](https://github.com/MomokoXu)
