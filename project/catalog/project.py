@@ -341,7 +341,7 @@ def editCatagory(catagory_id):
     if 'username' not in login_session:
         return redirect('/login')
     if editedCatagory.user_id != login_session['user_id']:
-        message="You are not authorized to edit this catagory. Please create your own catagory in order to delete."
+        message="You are not authorized to edit this catagory. Please create your own catagory in order to edit."
         return render_template("redirecting.html", message=message)
     if request.method == 'POST':
         if request.form['name']:
