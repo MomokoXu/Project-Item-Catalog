@@ -32,7 +32,7 @@ This application provides JSON endpoints.
     * Change to *vagrant* folder:
         * Run: `cd fullstack/vagrant/`
     * Clone this project:
-        * Run: `git clone https://github.com/MomokoXu/Project-Tournament-Database.git tournament`
+        * Run: `git clone https://github.com/MomokoXu/Project-Item-Catalog`
 6. Start the virtual machine:
     * Run: `vagrant up`
 ---
