@@ -43,7 +43,7 @@ This application provides JSON endpoints.
     * Run: `cd /vagrant/project/catalog`
 3. Run this app:
     * Run: python project.py
-4. Open http://localhost:8000 in your browser.
+4. Open http://localhost:8000/ in your browser.
 ---
 ## Future work
 This project currently only support single tournament, in the future it is supposed to be extended to support multiple tournaments.
