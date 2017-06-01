@@ -377,8 +377,6 @@ def CatagoryItems(catagory_id):
     catagory = session.query(Catagory).filter_by(id=catagory_id).one()
     creator = getUserInfo(catagory.user_id)
     items = session.query(Item).filter_by(catagory_id=catagory_id).all()
-    print login_session['user_id']
-    print creator.id
     if 'username' not in login_session or creator.id != login_session['user_id']:
         return render_template('publicitems.html', items=items, catagory=catagory, creator=creator)
     else:
