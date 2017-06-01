@@ -1,6 +1,7 @@
 ---
 # Item Catalog App
-
+![Image of webpage](https://github.com/MomokoXu/Project-Item-Catalog/blob/master/app_sample1.png)
+![Image of webpage](https://github.com/MomokoXu/Project-Item-Catalog/blob/master/app_sample2.png)
 ---
 
 ## Introduction
