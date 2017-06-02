@@ -11,6 +11,7 @@ import httplib2
 import json
 from flask import make_response
 import requests
+from functools import wraps
 
 app = Flask(__name__)
 
@@ -26,6 +27,10 @@ CLIENT_ID = json.loads(
     open('client_secrets.json', 'r').read())['web']['client_id']
 APPLICATION_NAME = "Item Catalog Application"
 
+# decorator function to check for user login status
+
+
+
 # Create anti-forgery state token
 @app.route('/login')
 def showLogin():
@@ -35,6 +40,13 @@ def showLogin():
     # return "The current session state is %s" % login_session['state']
     return render_template('login.html', STATE=state)
 
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' not in login_session:
+            return redirect(url_for('/login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 @app.route('/fbconnect', methods=['POST'])
 def fbconnect():
@@ -72,7 +84,8 @@ def fbconnect():
     login_session['email'] = data["email"]
     login_session['facebook_id'] = data["id"]
 
-    # The token must be stored in the login_session in order to properly logout, let's strip out the information before the equals sign in our token
+    # The token must be stored in the login_session in order to properly logout,
+    # let's strip out the information before the equals sign in our token
     stored_token = token.split("=")[1]
     login_session['access_token'] = stored_token
 
@@ -312,16 +325,18 @@ def showCatagories():
     elif c_count < i_count:
         items_more = items[c_count:]
     if 'username' not in login_session:
-        return render_template('publiccatagories.html', info=info, items=items_more, catagories=catagories_more)
+        return render_template('publiccatagories.html', info=info,
+                                items=items_more, catagories=catagories_more)
     else:
-        return render_template('catagories.html', info=info, items=items_more, catagories=catagories_more, username=login_session['username'])
+        return render_template('catagories.html', info=info, items=items_more,
+                                catagories=catagories_more,
+                                username=login_session['username'])
 
 
 # Create a new Catagory
 @app.route('/catagory/new/', methods=['GET', 'POST'])
+@login_required
 def newCatagory():
-    if 'username' not in login_session:
-        return redirect('/login')
     if request.method == 'POST':
         newCatagory = Catagory(
             name=request.form['name'], user_id=login_session['user_id'])
@@ -335,126 +350,167 @@ def newCatagory():
 # Edit a Catagory
 
 @app.route('/catagory/<int:catagory_id>/edit/', methods=['GET', 'POST'])
+@login_required
 def editCatagory(catagory_id):
-    editedCatagory = session.query(
-        Catagory).filter_by(id=catagory_id).one()
-    if 'username' not in login_session:
-        return redirect('/login')
-    if editedCatagory.user_id != login_session['user_id']:
-        message="You are not authorized to edit this catagory. Please create your own catagory in order to edit."
+    try:
+        editedCatagory = session.query(Catagory).filter_by(id=catagory_id).one()
+        if editedCatagory.user_id != login_session['user_id']:
+            message = "You are not authorized to edit this catagory. "\
+                      "Please create your own catagory in order to edit."
+            return render_template("redirecting.html", message=message)
+        if request.method == 'POST':
+            if request.form['name']:
+                editedCatagory.name = request.form['name']
+                flash('Catagory %s Successfully Edited' % editedCatagory.name)
+            return redirect(url_for('showCatagories'))
+        else:
+            return render_template('editCatagory.html', catagory=editedCatagory)
+    except:
+        message = "No such category!"
         return render_template("redirecting.html", message=message)
-    if request.method == 'POST':
-        if request.form['name']:
-            editedCatagory.name = request.form['name']
-            flash('Catagory %s Successfully Edited' % editedCatagory.name)
-        return redirect(url_for('showCatagories'))
-    else:
-        return render_template('editCatagory.html', catagory=editedCatagory)
 
 
 # Delete a Catagory
 @app.route('/catagory/<int:catagory_id>/delete/', methods=['GET', 'POST'])
+@login_required
 def deleteCatagory(catagory_id):
-    catagoryToDelete = session.query(
-        Catagory).filter_by(id=catagory_id).one()
-    if 'username' not in login_session:
-        return redirect('/login')
-    if catagoryToDelete.user_id != login_session['user_id']:
-        message="You are not authorized to delete this catagory. Please create your own catagory in order to delete."
+    try:
+        catagoryToDelete = session.query(
+            Catagory).filter_by(id=catagory_id).one()
+        if catagoryToDelete.user_id != login_session['user_id']:
+            message = "You are not authorized to delete this catagory."\
+                      "Please create your own catagory in order to delete."
+            return render_template("redirecting.html", message=message)
+        if request.method == 'POST':
+            session.delete(catagoryToDelete)
+            flash('%s Successfully Deleted' % catagoryToDelete.name)
+            session.commit()
+            return redirect(url_for('showCatagories', catagory_id=catagory_id))
+        else:
+            return render_template('deleteCatagory.html', catagory=catagoryToDelete)
+    except:
+        message = "No such category!"
         return render_template("redirecting.html", message=message)
-    if request.method == 'POST':
-        session.delete(catagoryToDelete)
-        flash('%s Successfully Deleted' % catagoryToDelete.name)
-        session.commit()
-        return redirect(url_for('showCatagories', catagory_id=catagory_id))
-    else:
-        return render_template('deleteCatagory.html', catagory=catagoryToDelete)
 
 # Show items for a Catagory
 @app.route('/catagory/<int:catagory_id>/')
 @app.route('/catagory/<int:catagory_id>/items/', methods=['GET', 'POST'])
 def CatagoryItems(catagory_id):
-    catagory = session.query(Catagory).filter_by(id=catagory_id).one()
-    creator = getUserInfo(catagory.user_id)
-    items = session.query(Item).filter_by(catagory_id=catagory_id).all()
-    if 'username' not in login_session or creator.id != login_session['user_id']:
-        return render_template('publicitems.html', items=items, catagory=catagory, creator=creator)
-    else:
-        return render_template('catagoryItems.html', catagory_id=catagory_id, items=items, catagory=catagory,creator=creator)
+    try:
+        catagory = session.query(Catagory).filter_by(id=catagory_id).one()
+        creator = getUserInfo(catagory.user_id)
+        items = session.query(Item).filter_by(catagory_id=catagory_id).all()
+        if 'username' not in login_session or creator.id != login_session['user_id']:
+            return render_template('publicitems.html', items=items,
+                                    catagory=catagory, creator=creator)
+        else:
+            return render_template('catagoryItems.html', catagory_id=catagory_id,
+                                    items=items, catagory=catagory,creator=creator)
+    except:
+        message = "No such category!"
+        return render_template("redirecting.html", message=message)
 
 # Create a new catagory item
 @app.route('/catagory/<int:catagory_id>/item/new/', methods=['GET', 'POST'])
+@login_required
 def newCatagoryItem(catagory_id):
-    if 'username' not in login_session:
-        return redirect('/login')
-    catagory = session.query(Catagory).filter_by(id=catagory_id).one()
-    if request.method == 'POST':
-        newItem = Item(name=request.form['name'], description=request.form['description'], price=request.form[
-                           'price'],catagory_id=catagory_id, user_id=login_session['user_id'])
-        session.add(newItem)
-        session.commit()
-        flash('New Catagory Item %s Successfully Created' % (newItem.name))
-        return redirect(url_for('CatagoryItems', catagory_id=catagory_id))
-    else:
-        return render_template('newCatagoryItem.html', catagory_id=catagory_id)
+    try:
+        catagory = session.query(Catagory).filter_by(id=catagory_id).one()
+        if request.method == 'POST':
+            newItem = Item(name=request.form['name'],
+                           description=request.form['description'],
+                           price=request.form['price'],catagory_id=catagory_id,
+                           user_id=login_session['user_id'])
+            session.add(newItem)
+            session.commit()
+            flash('New Catagory Item %s Successfully Created' % (newItem.name))
+            return redirect(url_for('CatagoryItems', catagory_id=catagory_id))
+        else:
+            return render_template('newCatagoryItem.html', catagory_id=catagory_id)
+    except:
+        message = "No such category!"
+        return render_template("redirecting.html", message=message)
 
 
 # Edit a catagory item
 @app.route('/catagory/<int:catagory_id>/item/<int:item_id>/edit', methods=['GET', 'POST'])
+@login_required
 def editCatagoryItem(catagory_id, item_id):
-    if 'username' not in login_session:
-        return redirect('/login')
-    editedItem = session.query(Item).filter_by(id=item_id).one()
-    catagory = session.query(Catagory).filter_by(id=catagory_id).one()
-    catagories = session.query(Catagory).all()
-    if login_session['user_id'] != editedItem.user_id:
-        message="You are not authorized to edit this item. Please create your own item in order to edit."
-        return render_template("redirectingItems.html", message=message, catagory_id=catagory_id)
-    if request.method == 'POST':
-        if request.form['name']:
-            editedItem.name = request.form['name']
-        if request.form['description']:
-            editedItem.description = request.form['description']
-        if request.form['price']:
-            editedItem.price = request.form['price']
-        if request.form['catagory']:
-            temp_catagory = session.query(Catagory).filter_by(id=request.form['catagory']).one()
-            editedItem.catagory_id = temp_catagory.id
-        session.add(editedItem)
-        session.commit()
-        flash('Item Successfully Edited')
-        return redirect(url_for('CatagoryItems', catagory_id=catagory_id, catagory=catagory))
-    else:
-        return render_template('editcatagoryitem.html', catagory_id=catagory_id, item_id=item_id, item=editedItem, catagories=catagories)
+    try:
+        editedItem = session.query(Item).filter_by(id=item_id).one()
+        catagory = session.query(Catagory).filter_by(id=catagory_id).one()
+        catagories = session.query(Catagory).all()
+        if login_session['user_id'] != editedItem.user_id:
+            message = "You are not authorized to edit this item."\
+                      "Please create your own item in order to edit."
+            return render_template("redirectingItems.html", message=message,
+                                    catagory_id=catagory_id)
+        if request.method == 'POST':
+            if request.form['name']:
+                editedItem.name = request.form['name']
+            if request.form['description']:
+                editedItem.description = request.form['description']
+            if request.form['price']:
+                editedItem.price = request.form['price']
+            if request.form['catagory']:
+                temp_catagory = session.query(Catagory).filter_by(
+                                id=request.form['catagory']).one()
+                editedItem.catagory_id = temp_catagory.id
+            session.add(editedItem)
+            session.commit()
+            flash('Item Successfully Edited')
+            return redirect(url_for('CatagoryItems', catagory_id=catagory_id,
+                                                     catagory=catagory))
+        else:
+            return render_template('editcatagoryitem.html',
+                                    catagory_id=catagory_id, item_id=item_id,
+                                    item=editedItem, catagories=catagories)
+    except:
+        message = "Not possible to edit this item"
+        return render_template("redirecting.html", message=message)
 
 
 # Delete a catagory item
 @app.route('/catagory/<int:catagory_id>/item/<int:item_id>/delete', methods=['GET', 'POST'])
+@login_required
 def deleteCatagoryItem(catagory_id, item_id):
-    if 'username' not in login_session:
-        return redirect('/login')
-    catagory = session.query(Catagory).filter_by(id=catagory_id).one()
-    itemToDelete = session.query(Item).filter_by(id=item_id).one()
-    if login_session['user_id'] != itemToDelete.user_id:
-        message="You are not authorized to delete this item. Please create your own item in order to delete."
-        return render_template("redirectingItems.html", message=message, catagory_id=catagory_id)
-    if request.method == 'POST':
-        session.delete(itemToDelete)
-        session.commit()
-        flash('Item Successfully Deleted')
-        return redirect(url_for('CatagoryItems', catagory_id=catagory_id, catagory=catagory))
-    else:
-        return render_template('deleteCatagoryItem.html', catagory_id=catagory_id, catagory=catagory, item=itemToDelete)
+    try:
+        catagory = session.query(Catagory).filter_by(id=catagory_id).one()
+        itemToDelete = session.query(Item).filter_by(id=item_id).one()
+        if login_session['user_id'] != itemToDelete.user_id:
+            message = "You are not authorized to delete this item."\
+                      "Please create your own item in order to delete."
+            return render_template("redirectingItems.html", message=message,
+                                    catagory_id=catagory_id)
+        if request.method == 'POST':
+            session.delete(itemToDelete)
+            session.commit()
+            flash('Item Successfully Deleted')
+            return redirect(url_for('CatagoryItems', catagory_id=catagory_id,
+                                     catagory=catagory))
+        else:
+            return render_template('deleteCatagoryItem.html',
+                                    catagory_id=catagory_id, catagory=catagory,
+                                    item=itemToDelete)
+    except:
+        message = "Not possible to delete this item"
+        return render_template("redirecting.html", message=message)
 
 # retrive a catagory item information
 @app.route('/catagory/<int:catagory_id>/item/<int:item_id>/info')
 def catagoryItemInfo(catagory_id, item_id):
-    catagory = session.query(Catagory).filter_by(id=catagory_id).one()
-    itemToView = session.query(Item).filter_by(id=item_id).one()
-    if 'username' not in login_session:
-        return render_template('publicCatagoryItem.html',catagory=catagory, item=itemToView)
-    else:
-        return render_template('showCatagoryItem.html', catagory=catagory, item=itemToView)
+    try:
+        catagory = session.query(Catagory).filter_by(id=catagory_id).one()
+        itemToView = session.query(Item).filter_by(id=item_id).one()
+        if 'username' not in login_session:
+            return render_template('publicCatagoryItem.html',catagory=catagory,
+                                    item=itemToView)
+        else:
+            return render_template('showCatagoryItem.html', catagory=catagory,
+                                    item=itemToView)
+    except:
+        message = "No such item!"
+        return render_template("redirecting.html", message=message)
 
 if __name__ == '__main__':
     app.secret_key = 'super_secret_key'
