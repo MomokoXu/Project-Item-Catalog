@@ -36,6 +36,7 @@ This application provides JSON endpoints.
 6. Start the virtual machine:
     * Run: `vagrant up`
 ---
+
 ### How to use it
 1. Log into the VM:
     * Run:  `vagrant ssh`
@@ -44,6 +45,47 @@ This application provides JSON endpoints.
 3. Run this app:
     * Run: python project.py
 4. Open http://localhost:8000/ in your browser.
+---
+
+### How to use the database
+1. Log into the VM:
+    * Run:  `vagrant ssh`
+2. Change directory for the files of this project:
+    * Run: `cd /vagrant/project/catalog`
+3. Open Python
+    * Run: python
+4. In Python Shell,
+    1. import dependencies:
+        * Run:
+            ```python
+           >>> from sqlalchemy import create_engine
+           >>> from sqlalchemy import sessionmaker
+            ```
+    2. import empty databse:
+        * Run:
+            ```python
+            >>> from database_set import Base, User, Catagory, Item
+            ```
+    3. Create databse engine and bind the engine to the base class
+        * Run:
+            ```python
+            >>> engine = create_engine('sqlite:///item_catalog.db')
+            >>> Base.metadata.create_all(engine)
+            ```
+    4. Create a sessionmaker object to establish a link of communication between our executions and the database engine
+        * Run:
+            ```python
+            >>> DBSession = sessionmaker(bind=engine)
+            >>> session = DBSession()
+            ```
+    5. Now, you can do any of your queries like create, read, update, and delete by object manipulation. For example, create a new user:
+        * Run:
+            ```python
+            user1 = User(name="Momoko", email="momoko0808@hotmail.com")
+            session.add(user1)
+            session.commit()
+            ```
+
 ---
 
 ## Author
