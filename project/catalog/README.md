@@ -5,6 +5,7 @@
 ---
 
 ## Introduction
+[**Click here to Open this APP**](http://52.11.8.252)
 This Item Catalog project aims to implement an application that provides a list of items variety of categories, as well as provide a user registration and authentication system.
 The homepage displays all current categories along with the latest added items. By selecting a specific category, all the items available for that category will be shown. Also, the detailed description of a specific item wll be shown when you select a specific item.
 After logging in, a user has the ability to add, update, or delete a category or a item info.
