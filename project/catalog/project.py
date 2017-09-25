@@ -22,14 +22,12 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
-
+# Client secrects
 CLIENT_ID = json.loads(
     open('client_secrets.json', 'r').read())['web']['client_id']
 APPLICATION_NAME = "Item Catalog Application"
 
 # decorator function to check for user login status
-
-
 
 # Create anti-forgery state token
 @app.route('/login')
